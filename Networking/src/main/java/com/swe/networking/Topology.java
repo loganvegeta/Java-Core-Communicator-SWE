@@ -35,6 +35,7 @@ public class Topology implements AbstractTopology, AbstractController {
 
     public Topology() {
         clusters = new ArrayList<Cluster>();
+        clientIP = new HashMap<>();
     }
 
     /**

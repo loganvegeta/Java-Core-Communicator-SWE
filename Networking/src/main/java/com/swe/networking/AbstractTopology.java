@@ -10,4 +10,5 @@ package com.swe.networking;
 
 public interface AbstractTopology {
     ClientNode GetServer(String dest);
+    void addUser(final String ip, final Integer port);
 }
