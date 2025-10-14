@@ -58,16 +58,17 @@ public final class ClientServer {
      *
      * @param sHostname The IP address of the main cluster server.
      * @param sPort     The port number of the main cluster server.
+     * @param srcPort   The port at which TCP server is hosted for this instance.
      * @throws IOException If an I/O error occurs when opening the server socket.
      */
-    public ClientServer(final InetAddress sHostname, final int sPort) throws IOException {
+    public ClientServer(final InetAddress sHostname, final int sPort, final int srcPort) throws IOException {
         try {
             this.hostName = InetAddress.getLocalHost();
         } catch (final UnknownHostException e) {
             System.err.println("Could not get IP address: " + e.getMessage());
             throw new RuntimeException("Failed to get local host IP", e);
         }
-        this.port = DEFAULT_PORT;
+        this.port = srcPort;
 
         this.serverHostname = sHostname;
         this.serverPort = sPort;
@@ -81,7 +82,7 @@ public final class ClientServer {
             throw e;
         }
 
-        if (this.serverHostname.equals(this.hostName)) {
+        if (this.serverHostname.equals(this.hostName) && this.port == this.serverPort) {
             clients.add(new ClientNode(this.hostName, this.port));
         } else {
             sendHello(this.hostName, this.port);
@@ -114,7 +115,7 @@ public final class ClientServer {
             final PacketParser parser = PacketParser.getPacketParser();
             System.out.println("Received packet from: " + sourceIp + ":" + sourcePort);
 
-            if (serverHostname.equals(this.hostName)) {
+            if (serverHostname.equals(this.hostName) && port == this.serverPort) {
                  final int type = parser.getType(packet);
                  final int connectionType = parser.getConnectionType(packet);
 
@@ -148,7 +149,7 @@ public final class ClientServer {
      * @return 0 on success, -1 on failure.
      */
     public int sendTo(final byte[] data, final InetAddress dest, final int destPort) {
-        if (serverHostname.equals(this.hostName)) {
+        if (serverHostname.equals(this.hostName) && port == this.serverPort) {
             // --- This is the Server's logic ---
             if (destInCluster(dest, destPort)) {
                 try (Socket socket = new Socket(dest, destPort)) {
@@ -263,7 +264,7 @@ public final class ClientServer {
      * @param data The payload byte array from the packet.
      */
     private void receiveHello(final byte[] data) {
-        if (this.serverHostname.equals(this.hostName)) {
+        if (this.serverHostname.equals(this.hostName) &&  this.port == this.serverPort) {
             final long packetHeader = createPacketHeader(PACKET_TYPE_HELLO, 0, 0, CONN_TYPE_NEW, 0, 0, 0, 0);
             final ByteBuffer broadcastBuffer = ByteBuffer.allocate(BUFFER_SIZE);
             broadcastBuffer.putLong(packetHeader);
