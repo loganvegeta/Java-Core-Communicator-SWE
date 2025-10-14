@@ -85,7 +85,7 @@ public final class ClientServer {
         if (this.serverHostname.equals(this.hostName) && this.port == this.serverPort) {
             clients.add(new ClientNode(this.hostName, this.port));
         } else {
-            sendHello(this.hostName, this.port);
+            sendHello(this.hostName, this.port, this.serverHostname, this.serverPort);
         }
     }
 
@@ -236,61 +236,50 @@ public final class ClientServer {
     /**
      * Constructs and sends a HELLO packet from this node to the main server.
      *
-     * @param myIp   The IP address of this node.
-     * @param myPort The port of this node.
+     * @param payloadIp   The IP address to be sent in payload.
+     * @param payloadPort The port to be sent in payload.
+     * @param destIp The destination IP address.
+     * @param destPort The destination port.
      * @throws IOException If the send operation fails.
      */
-    private void sendHello(final InetAddress myIp, final int myPort) throws IOException {
+    private void sendHello(final InetAddress payloadIp, final int payloadPort, final InetAddress destIp, final int destPort) throws IOException {
         final long packetHeader = createPacketHeader(PACKET_TYPE_HELLO, 0, 0, CONN_TYPE_NEW, 0, 0, 0, 0);
-        final byte[] addressBytes = myIp.getAddress();
+        final byte[] addressBytes = payloadIp.getAddress();
 
         final ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
         buffer.putLong(packetHeader);
         buffer.putInt(addressBytes.length);
         buffer.put(addressBytes);
-        buffer.putInt(myPort);
+        buffer.putInt(payloadPort);
 
         // Create a new byte array with the exact size of the data written
         final byte[] packet = new byte[buffer.position()];
         buffer.flip(); // Prepare buffer for reading
         buffer.get(packet); // Read data into the new array
 
-        this.sendTo(packet, this.serverHostname, this.serverPort);
+        this.sendTo(packet, destIp, destPort);
     }
 
     /**
      * Processes a received HELLO packet's payload.
      *
-     * @param data The payload byte array from the packet.
+     * @param payload The payload byte array from the packet.
      */
-    private void receiveHello(final byte[] data) {
-        if (this.serverHostname.equals(this.hostName) &&  this.port == this.serverPort) {
-            final long packetHeader = createPacketHeader(PACKET_TYPE_HELLO, 0, 0, CONN_TYPE_NEW, 0, 0, 0, 0);
-            final ByteBuffer broadcastBuffer = ByteBuffer.allocate(BUFFER_SIZE);
-            broadcastBuffer.putLong(packetHeader);
-            broadcastBuffer.put(data);
+    private void receiveHello(final byte[] payload) {
+        InetAddress receivedIp = null;
+        int receivedPort = -1;
 
-            final byte[] packet = new byte[broadcastBuffer.position()];
-            broadcastBuffer.flip();
-            broadcastBuffer.get(packet);
-
-            for (final ClientNode client : this.clients) {
-                if (!client.hostName.equals(this.hostName)) {
-                    this.sendTo(packet, client.hostName, client.port);
-                }
-            }
-        }
-
-        final ByteBuffer buffer = ByteBuffer.wrap(data);
+        final ByteBuffer buffer = ByteBuffer.wrap(payload);
         try {
-            // Correctly parse the payload using ByteBuffer
+            // Parse the payload using ByteBuffer
             final int ipSize = buffer.getInt();
             final byte[] addressBytes = new byte[ipSize];
             buffer.get(addressBytes);
-            final InetAddress ip = InetAddress.getByAddress(addressBytes);
-            final int receiverPort = buffer.getInt();
+            receivedIp = InetAddress.getByAddress(addressBytes);
+            receivedPort = buffer.getInt();
 
-            final ClientNode newClient = new ClientNode(ip, receiverPort);
+            final ClientNode newClient = new ClientNode(receivedIp, receivedPort);
+
             if (!clients.contains(newClient)) {
                 clients.add(newClient);
                 System.out.println("Added new client to cluster: " + newClient);
@@ -303,5 +292,32 @@ public final class ClientServer {
             System.err.println("Error parsing hello packet, buffer underflow. Packet may be malformed.");
             e.printStackTrace();
         }
+
+        if (this.serverHostname.equals(this.hostName) &&  this.port == this.serverPort) {
+            final long packetHeader = createPacketHeader(PACKET_TYPE_HELLO, 0, 0, CONN_TYPE_NEW, 0, 0, 0, 0);
+            final ByteBuffer broadcastBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+            broadcastBuffer.putLong(packetHeader);
+            broadcastBuffer.put(payload);
+
+            final byte[] packet = new byte[broadcastBuffer.position()];
+            broadcastBuffer.flip();
+            broadcastBuffer.get(packet);
+
+            for (final ClientNode client : this.clients) {
+                if (!client.hostName.equals(this.hostName)) {
+                    // Forward IP and port of newly added client to each existing client
+                    this.sendTo(packet, client.hostName, client.port);
+
+                    // Send back each existing client info to the newly added client
+                    try {
+                        this.sendHello(client.hostName, client.port, receivedIp, receivedPort);
+                    } catch (final IOException e) {
+                        System.err.println("Client error sending to server for forwarding: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
     }
 }
