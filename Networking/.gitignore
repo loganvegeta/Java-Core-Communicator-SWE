@@ -1,0 +1,5 @@
+# IDE and build files
+.idea/
+*.iml
+target/
+.vscode/
