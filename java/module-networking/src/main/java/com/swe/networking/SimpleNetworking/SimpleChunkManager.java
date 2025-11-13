@@ -1,7 +1,7 @@
 package com.swe.networking.SimpleNetworking;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -17,7 +17,7 @@ public class SimpleChunkManager {
     /**
      * Variable to store the name of the module.
      */
-    private static final String MODULENAME = "SIMPLECHUNKMANAGER";
+    private static final String MODULENAME = "[SIMPLECHUNKMANAGER]";
     /**
      * Singleton chunkManger.
      */
@@ -38,14 +38,6 @@ public class SimpleChunkManager {
      * Message id.
      */
     private int messageId = 0;
-    /**
-     * chunkListMap maps message id to list of chunks.
-     */
-    private final Map<Integer, ByteBuffer> chunkListMap = new HashMap<>();
-    /**
-     * chunkListMap maps message id to list of chunks.
-     */
-    private final Map<Integer, Integer> chunkLengthMap = new HashMap<>();
 
     private SimpleChunkManager(final int payloadSize) {
         SimpleNetworkLogger.printInfo(MODULENAME, "Simple Chunk manager initialized...");
@@ -68,38 +60,87 @@ public class SimpleChunkManager {
     }
 
     /**
+     * chunkListMap maps message id to list of chunks.
+     */
+    private final Map<Integer, Vector<byte[]>> chunkListMap = new HashMap<>();
+    /**
+     * messageList gets the list of merged chunks.
+     */
+    private final Vector<byte[]> messageList = new Vector<>();
+
+    /**
+     * Temporary function used to get the messageList. Used only for testing and
+     * to be replaced with some other function later.
+     *
+     * @return messageList. All the messages recorded till now.
+     */
+    Vector<byte[]> getMessageList() {
+        return messageList;
+    }
+
+    /**
      * Add chunk function.
      *
      * @param chunk the byte of chunk coming in.
-     * @return the combined message
+     * @return the combined message if present
      * @throws UnknownHostException the issue from packet parser.
      */
     public byte[] addChunk(final byte[] chunk) throws UnknownHostException {
         final PacketInfo info = parser.parsePacket(chunk);
         final int msgId = info.getMessageId();
         final int maxNumChunks = info.getChunkLength();
-        final int chunkId = info.getChunkNum();
-        SimpleNetworkLogger.printInfo(MODULENAME, "Chunk id / total chunks : " + chunkId + " / " + maxNumChunks);
-        SimpleNetworkLogger.printInfo(MODULENAME, "msg id : " + msgId);
+        final int chunkNum = info.getChunkNum();
+        System.out.println("Message ID: " + msgId);
+        System.out.println("Chunk num / Max chunks: " + chunkNum + " / " + maxNumChunks);
         if (chunkListMap.containsKey(msgId)) {
-            final ByteBuffer messageBuffer = chunkListMap.get(msgId);
-            messageBuffer.position(chunkId * defaultPayloadSize);
-            messageBuffer.put(info.getPayload());
-            final int newVal = chunkLengthMap.getOrDefault(msgId, 0) + 1;
-            chunkLengthMap.put(msgId, newVal);
+            chunkListMap.get(msgId).add(chunk);
         } else {
-            final ByteBuffer messageBuffer = ByteBuffer.allocate(maxNumChunks * defaultPayloadSize);
-            messageBuffer.position(chunkId * defaultPayloadSize);
-            messageBuffer.put(info.getPayload());
-            chunkListMap.put(msgId, messageBuffer);
-            chunkLengthMap.put(msgId, 1);
+            chunkListMap.put(msgId, new Vector<byte[]>());
+            chunkListMap.get(msgId).add(chunk);
         }
-        if (chunkLengthMap.get(msgId) == maxNumChunks) {
-            final byte[] messageChunk = chunkListMap.get(msgId).array();
+        if (chunkListMap.get(msgId).size() == maxNumChunks) {
+            final byte[] messageChunk = mergeChunks(chunkListMap.get(msgId));
+            System.out.println("Merged Message ID: " + msgId + " Size: " + messageChunk.length);
+            messageList.add(messageChunk);
             chunkListMap.remove(msgId);
             return messageChunk;
         }
         return null;
+    }
+
+    /**
+     * Merge Chunks function.
+     *
+     * @param chunks The list of incoming chunks.
+     * @return merged packet.
+     */
+    private byte[] mergeChunks(final Vector<byte[]> chunks) throws UnknownHostException {
+        int dataSize = 0;
+        for (byte[] chunk : chunks) {
+            dataSize += chunk.length - headerSize;
+        }
+        final byte[] completePayload = new byte[dataSize];
+        PacketInfo info = parser.parsePacket(chunks.get(0));
+        final int lastChunkNum = info.getChunkLength() - 1;
+        final Vector<byte[]> sortedChunks = new Vector<>(Collections.nCopies(chunks.size(), null));
+        for (byte[] chunk : chunks) {
+            info = parser.parsePacket(chunk);
+            final int i = info.getChunkNum();
+            sortedChunks.set(i, chunk);
+        }
+        int i = 0;
+        for (byte[] chunk : sortedChunks) {
+            info = parser.parsePacket(chunk);
+            final int chunkSize = chunk.length - headerSize;
+            final byte[] chunkPayload = info.getPayload();
+            System.arraycopy(chunkPayload, 0, completePayload, i, chunkSize);
+            i += chunkSize;
+        }
+        info = parser.parsePacket(chunks.get(0));
+        info.setChunkLength(1);
+        info.setChunkNum(0);
+        info.setPayload(completePayload);
+        return parser.createPkt(info);
     }
 
     /**

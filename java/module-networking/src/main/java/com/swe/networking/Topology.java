@@ -8,7 +8,7 @@ import java.util.List;
  * The main architecture of the networking module. Implements the cluster
  * networks
  */
-public final class Topology implements AbstractTopology, AbstractController {
+public final class Topology implements AbstractTopology {
 
     /**
      * The List of all cluster clients.
@@ -30,9 +30,9 @@ public final class Topology implements AbstractTopology, AbstractController {
      */
     private int numClients;
     /**
-     * The maximum of clusters.
+     * The maximum size of a cluster.
      */
-    private final int maxClusters = 2;
+    private final int singleClusterSize = 6;
     /**
      * The variable to iterate through the clusters.
      */
@@ -97,7 +97,6 @@ public final class Topology implements AbstractTopology, AbstractController {
      * @param deviceAddress Ip address of the current device
      * @param mainServerAddress Ip address of the server device
      */
-    @Override
     public void addUser(final ClientNode deviceAddress,
             final ClientNode mainServerAddress) {
         // update the network and add the client
@@ -155,28 +154,20 @@ public final class Topology implements AbstractTopology, AbstractController {
      */
     public int addClient(final ClientNode clientAddress) {
         numClients += 1;
-        // System.out.println(numClients + " " + numClusters);
-        // System.out.println(clusters + "\n" + clusterServers);
-        if (numClusters < maxClusters) {
-            numClusters += 1;
+
+        final List<ClientNode> lastCluster = clusters.get(clusters.size() - 1);
+        if (lastCluster.size() < singleClusterSize) {
+            lastCluster.add(clientAddress);
+            System.out.println("Added to cluster " + (numClusters - 1) + " ...");
+            return numClusters - 1;
+        } else {
             final List<ClientNode> cluster = new ArrayList<>();
             cluster.add(clientAddress);
             clusters.add(cluster);
             clusterServers.add(clientAddress);
+            numClusters++;
             System.out.println("Adding to a new cluster...");
-            return cluster.size() - 1;
-        } else {
-            clusters.get(clusterIndex).add(clientAddress);
-            if (clusters.get(clusterIndex).size() == 1) {
-                System.out.println("Adding to a new cluster...");
-                clusterServers.add(clientAddress);
-                // System.out.println(numClients + " " + numClusters);
-                // System.out.println(clusters + "\n" + clusterServers);
-            }
-            final int idx = clusterIndex;
-            clusterIndex = (clusterIndex + 1) % maxClusters;
-            System.out.println("Added to cluster " + clusterIndex + " ...");
-            return idx;
+            return numClusters - 1;
         }
     }
 

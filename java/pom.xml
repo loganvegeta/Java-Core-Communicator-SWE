@@ -26,6 +26,7 @@
     <!-- Define all modules -->
     <modules>
         <module>module-networking</module>
+        <module>module-core</module>
     </modules>
 
     <repositories>

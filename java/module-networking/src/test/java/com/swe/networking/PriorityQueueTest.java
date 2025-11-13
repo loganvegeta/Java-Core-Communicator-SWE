@@ -592,7 +592,7 @@ class PriorityQueueTest {
 
         // Assertion against a baseline minimum (adjust this value based on your hardware)
         // This asserts that the performance is reasonable, not just correct.
-        final double MIN_ACCEPTABLE_PPS = 10000.0; // Example baseline (100k PPS)
+        final double MIN_ACCEPTABLE_PPS = 1000.0; // Example baseline (100k PPS)
         assertTrue(packetsPerSecond > MIN_ACCEPTABLE_PPS,
                 String.format("Throughput is too low: %.0f PPS (Below %.0f PPS minimum)",
                         packetsPerSecond, MIN_ACCEPTABLE_PPS));

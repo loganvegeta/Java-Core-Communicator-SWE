@@ -23,7 +23,7 @@ public class Server implements IUser {
     /**
      * Variable to store the name of the module.
      */
-    private static final String MODULENAME = "SERVER";
+    private static final String MODULENAME = "[SERVER]";
     /**
      * The variable to store the device IP address.
      */

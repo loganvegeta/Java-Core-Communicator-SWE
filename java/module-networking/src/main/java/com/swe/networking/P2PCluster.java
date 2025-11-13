@@ -145,7 +145,6 @@ public class P2PCluster implements P2PUser {
         while (true) {
             final byte[] packet = tcpCommunicator.receiveData();
             if (packet == null) {
-                System.out.println("No packet received, continuing...");
                 continue;
             } else {
                 try {

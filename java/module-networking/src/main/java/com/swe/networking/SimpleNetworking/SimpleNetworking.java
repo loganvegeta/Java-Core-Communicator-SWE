@@ -21,7 +21,7 @@ public final class SimpleNetworking
     /**
      * Variable to store the name of the module.
      */
-    private static final String MODULENAME = "SIMPLENETWORKING";
+    private static final String MODULENAME = "[SIMPLENETWORKING]";
     /**
      * The singeton variable to store the class object.
      */

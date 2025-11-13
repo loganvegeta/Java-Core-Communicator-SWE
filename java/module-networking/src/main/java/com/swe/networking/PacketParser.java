@@ -45,8 +45,7 @@ The structure of the packet is given below
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 | Payload....
 +--+--+--+--+--+
-*/
-
+ */
 /**
  * The Packet Parser class to parse packets.
  */
@@ -61,78 +60,143 @@ public class PacketParser {
      * Size of the packet header in bytes.
      */
     private static final int HEADER_SIZE = 22;
-    /** Number of bytes in an IPv4 address. */
+    /**
+     * Number of bytes in an IPv4 address.
+     */
     private static final int LEN_IP = 4;
-    /** Number of bytes used to store a port number. */
+    /**
+     * Number of bytes used to store a port number.
+     */
     private static final int LEN_PORT = 2;
-    /** Number of bytes used to store the message id. */
+    /**
+     * Number of bytes used to store the message id.
+     */
     private static final int LEN_MESSAGE_ID = 4;
-    /** Number of bytes used to store the chunk number. */
+    /**
+     * Number of bytes used to store the chunk number.
+     */
     private static final int LEN_CHUNK_NUM = 4;
-    /** Number of bytes used to store the chunk length. */
+    /**
+     * Number of bytes used to store the chunk length.
+     */
     private static final int LEN_CHUNK_LENGTH = 4;
     // Offsets into the packet
-    /** Offset of the length field. */
+    /**
+     * Offset of the length field.
+     */
     private static final int OFF_LEN = 0;
-    /** Offset of the flags (type/priority/module bits) byte. */
+    /**
+     * Offset of the flags (type/priority/module bits) byte.
+     */
     private static final int OFF_FLAGS = 2;
-    /** Offset of the IPv4 address field. */
+    /**
+     * Offset of the IPv4 address field.
+     */
     private static final int OFF_IP = 4;
-    /** Offset of the port field. */
+    /**
+     * Offset of the port field.
+     */
     private static final int OFF_PORT = 8;
-    /** Offset of the message id field. */
+    /**
+     * Offset of the message id field.
+     */
     private static final int OFF_MESSAGE_ID = 10;
-    /** Offset of the chunk number field. */
+    /**
+     * Offset of the chunk number field.
+     */
     private static final int OFF_CHUNK_NUM = 14;
-    /** Offset of the chunk length field. */
+    /**
+     * Offset of the chunk length field.
+     */
     private static final int OFF_CHUNK_LENGTH = 18;
 
-    /** Bitfield sizes within the first two bytes. */
-    /** no of bits in byte 0 for type. */
+    /**
+     * Bitfield sizes within the first two bytes.
+     */
+    /**
+     * no of bits in byte 0 for type.
+     */
     private static final int BITS_TYPE = 2;
-    /** no of bits in byte 0 for priority. */
+    /**
+     * no of bits in byte 0 for priority.
+     */
     private static final int BITS_PRIORITY = 3;
-    /** no of bits in byte 1 for module. */
+    /**
+     * no of bits in byte 1 for module.
+     */
     private static final int BITS_MODULE = 4;
-    /** no of bits in byte 2 for connection type. */
+    /**
+     * no of bits in byte 2 for connection type.
+     */
     private static final int BITS_CONNECTION_TYPE = 3;
-    /** no of bits in byte 2 for broadcast. */
+    /**
+     * no of bits in byte 2 for broadcast.
+     */
     private static final int BITS_BROADCAST = 1;
-    /** no of bits in byte 2 for reserved. */
+    /**
+     * no of bits in byte 2 for reserved.
+     */
     private static final int BITS_EMPTY = 3;
 
-    /** Bit mask for the length field. */
+    /**
+     * Bit mask for the length field.
+     */
     private static final int MASK_LENGTH = 0xFF;
-    /** Bit mask for the type field. */
+    /**
+     * Bit mask for the type field.
+     */
     private static final int MASK_TYPE = (1 << BITS_TYPE) - 1; // 0b11
-    /** Bit mask for the priority field. */
+    /**
+     * Bit mask for the priority field.
+     */
     private static final int MASK_PRIORITY = (1 << BITS_PRIORITY) - 1; // 0b111
-    /** Bit mask for the module field's lower 3 bits. */
+    /**
+     * Bit mask for the module field's lower 3 bits.
+     */
     private static final int MASK_MODULE_LOWER = (1 << (BITS_MODULE - 1)) - 1; // 0b111
-    /** Bit mask for the module field's upper bit. */
+    /**
+     * Bit mask for the module field's upper bit.
+     */
     private static final int MASK_MODULE_UPPER = 1; // single bit in byte1 (MSB)
-    /** Bit mask for the connection type field. */
+    /**
+     * Bit mask for the connection type field.
+     */
     private static final int MASK_CONNECTION_TYPE = (1 << BITS_CONNECTION_TYPE) - 1; // 0b111
-    /** Bit mask for the broadcast field. */
+    /**
+     * Bit mask for the broadcast field.
+     */
     private static final int MASK_BROADCAST = 1;
 
-    /** Shift right amount to extract the length field from byte0 and byte1. */
+    /**
+     * Shift right amount to extract the length field from byte0 and byte1.
+     */
     private static final int SHIFT_LENGTH = 8;
-    /** Shift right amount to extract the type field from byte3. */
+    /**
+     * Shift right amount to extract the type field from byte3.
+     */
     private static final int SHIFT_TYPE = 8 - BITS_TYPE;
-    /** Shift right amount to extract the priority field from byte3. */
+    /**
+     * Shift right amount to extract the priority field from byte3.
+     */
     private static final int SHIFT_PRIORITY = 8 - BITS_TYPE - BITS_PRIORITY;
-    /** Shift right amount to extract the connection type field from byte3. */
+    /**
+     * Shift right amount to extract the connection type field from byte3.
+     */
     private static final int SHIFT_CONNECTION_TYPE = BITS_EMPTY + BITS_BROADCAST;
-    /** Shift right amount to extract the broadcast field from byte3. */
+    /**
+     * Shift right amount to extract the broadcast field from byte3.
+     */
     private static final int SHIFT_BROADCAST = BITS_EMPTY;
-    /** Shift right amount to extract the module's upper bit from byte3. */
+    /**
+     * Shift right amount to extract the module's upper bit from byte3.
+     */
     private static final int SHIFT_MODULE_UPPER = 7;
 
     /**
      * Private constructor.
      */
-    private PacketParser() { }
+    private PacketParser() {
+    }
 
     /**
      * Get the singleton instance of PacketParser.
@@ -203,8 +267,8 @@ public class PacketParser {
     }
 
     /**
-     * Create a packet from a PacketInfo instance. The Packet Info holds
-     * the packet header attributes and payload data.
+     * Create a packet from a PacketInfo instance. The Packet Info holds the
+     * packet header attributes and payload data.
      *
      * @param ds the packet info
      * @return the constructed packet as a byte array
@@ -258,9 +322,10 @@ public class PacketParser {
 
     /**
      * getter for header size.
+     *
      * @return HEADER_SIZE.
      */
     public static int getHeaderSize() {
-        return  HEADER_SIZE;
+        return HEADER_SIZE;
     }
 }

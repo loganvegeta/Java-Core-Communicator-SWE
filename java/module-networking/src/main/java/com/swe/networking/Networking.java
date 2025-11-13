@@ -2,13 +2,17 @@ package com.swe.networking;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
+
+import com.swe.core.RPCinteface.AbstractRPC;
 
 /**
  * The main class of the networking module.
  */
 public class Networking implements AbstractNetworking, AbstractController {
+
     /**
      * The singeton variable to store the class object.
      */
@@ -18,23 +22,39 @@ public class Networking implements AbstractNetworking, AbstractController {
      */
     private final HashMap<Integer, MessageListener> listeners = new HashMap<>();
 
-    /** The variable to store the client details. */
+    /**
+     * The variable to store the client details.
+     */
     private ClientNode user;
 
-    /** The variable to store singleton chunk manager. */
+    /**
+     * The variable to store singleton chunk manager.
+     */
     private final ChunkManager chunkManager;
 
-    /** The variable to store singleton priority queue. */
-    private final PriorityQueue priorityQueue;
+    /**
+     * The variable to store singleton priority queue.
+     */
+    private PriorityQueue priorityQueue;
+    /**
+     * The variable to store singleton priority queue.
+     */
+    private PacketParser parser;
 
-    /** The variable to store singleton topology. */
+    /**
+     * The variable to store singleton topology.
+     */
     private final Topology topology;
 
-    /** The variable to store singleton packet parser. */
-    final private PacketParser parser;
-
-    /** The variable to store maximum packet size to chunk. */
+    /**
+     * The variable to store maximum packet size to chunk.
+     */
     private final int payloadSize = 10 * 1024; // 10 KB
+
+    /**
+     * Variable to store the rpc for the app.
+     */
+    private AbstractRPC moduleRPC = null;
 
     /** The variable thread to run start() method continuously. */
     Thread startThread = null;
@@ -44,9 +64,9 @@ public class Networking implements AbstractNetworking, AbstractController {
      */
     private Networking() {
         chunkManager = ChunkManager.getChunkManager(payloadSize);
-        priorityQueue = PriorityQueue.getPriorityQueue();
-        topology = Topology.getTopology();
+        priorityQueue = priorityQueue.getPriorityQueue();
         parser = PacketParser.getPacketParser();
+        topology = Topology.getTopology();
     }
 
     /**
@@ -67,18 +87,29 @@ public class Networking implements AbstractNetworking, AbstractController {
     /**
      * Function to chunk and send the recevied data to the queue.
      *
-     * @param data     the data to be sent
-     * @param dest     the dest to send to
-     * @param module   the module to be sent to
+     * @param data the data to be sent
+     * @param dest the dest to send to
+     * @param module the module to be sent to
      * @param priority the priority of the data
      */
     @Override
     public void sendData(final byte[] data, final ClientNode[] dest, final int module, final int priority) {
+        System.out.println("Data length : " + data.length);
+        System.out.println("Destination : " + Arrays.toString(dest));
         final Vector<byte[]> chunks = getChunks(data, dest, module, priority, 0);
+        System.out.println("chunk number : " + chunks.size());
         for (byte[] chunk : chunks) {
             try {
+                final PacketInfo pktInfo = parser.parsePacket(chunk);
+                final InetAddress addr = pktInfo.getIpAddress();
+                final int port = pktInfo.getPortNum();
+                // long startTime = System.currentTimeMillis();
+                final ClientNode newdest = new ClientNode(addr.getHostAddress(), port);
+                // long endTime = System.currentTimeMillis();
+                // System.out.println("Time to create new dest: " + (endTime - startTime) + " ms");
+                System.out.println("Destination " + newdest);
+                // topology.sendPacket(chunk, newdest);
                 priorityQueue.addPacket(chunk);
-                System.out.println("Sending chunk: " + chunk);
             } catch (UnknownHostException ex) {
                 System.err.println("Unknown host exception: " + ex.getMessage());
             }
@@ -148,13 +179,13 @@ public class Networking implements AbstractNetworking, AbstractController {
      * Function to chunk the given data by the chunk manager to all clients.
      * here the dest does not matter
      *
-     * @param data     the data to be sent
-     * @param module   the module to be sent to
+     * @param data the data to be sent
+     * @param module the module to be sent to
      * @param priority the priority of the packet
      */
     @Override
     public void broadcast(final byte[] data, final int module, final int priority) {
-        final ClientNode[] dest = {topology.getServer(user) };
+        final ClientNode[] dest = {topology.getServer(user)};
         final Vector<byte[]> chunks = getChunks(data, dest, module, priority, 1);
         for (byte[] chunk : chunks) {
             try {
@@ -169,7 +200,7 @@ public class Networking implements AbstractNetworking, AbstractController {
     /**
      * Function that other modules subscribe to.
      *
-     * @param name     the nameId of the module.
+     * @param name the nameId of the module.
      * @param function the function to be called
      */
     @Override
@@ -223,4 +254,29 @@ public class Networking implements AbstractNetworking, AbstractController {
         }
     }
 
+    /**
+     * Function called to close the networking module.
+     */
+    @Override
+    public void closeNetworking() {
+        System.out.println("Closing Networking module...");
+        topology.closeTopology();
+    }
+
+    /**
+     * Function to consume the RPC.
+     *
+     * @param rpc the rpc to consume by the networking
+     */
+    @Override
+    public void consumeRPC(final AbstractRPC rpc) {
+        moduleRPC = rpc;
+        final NetworkRPC networkRPC = NetworkRPC.getNetworkRPC();
+        moduleRPC.subscribe("getNetworkRPCAddUser", networkRPC::networkRPCAddUser);
+        moduleRPC.subscribe("networkRPCBroadcast", networkRPC::networkRPCBroadcast);
+        moduleRPC.subscribe("networkRPCRemoveSubscription", networkRPC::networkRPCRemoveSubscription);
+        moduleRPC.subscribe("networkRPCSendData", networkRPC::networkRPCSendData);
+        moduleRPC.subscribe("networkRPCSubscribe", networkRPC::networkRPCSubscribe);
+        moduleRPC.subscribe("networkRPCCloseNetworking", networkRPC::networkRPCCloseNetworking);
+    }
 }

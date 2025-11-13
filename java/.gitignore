@@ -5,7 +5,7 @@
 # intellij java specific files
 Networking/.idea/
 Networking/.mvn/
-
+*/target/
 /.vscode
 **/.idea
 /target/

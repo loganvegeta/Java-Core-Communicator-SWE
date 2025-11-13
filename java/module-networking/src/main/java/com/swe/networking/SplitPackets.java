@@ -9,6 +9,7 @@ import java.util.List;
  * Classs to split the received data into packets.
  */
 public class SplitPackets {
+
     /**
      * Singleton design pattern to prevent repeating class instantiations.
      *
@@ -18,7 +19,7 @@ public class SplitPackets {
     /**
      * Variable to store the buffer size for incomplete buffer.
      */
-    private final int bufferSize = 15 * 1024;
+    private final int bufferSize = 30 * 1024;
 
     /**
      * Buffer to store the incomplete packets from the data.
@@ -59,6 +60,7 @@ public class SplitPackets {
 
         if (incompleteBuffer.position() > 0) {
             incompleteBuffer.flip();
+            System.out.println("Remaining data from previous read");
             final byte[] oldData = new byte[incompleteBuffer.remaining()];
             incompleteBuffer.get(oldData);
 
@@ -72,11 +74,12 @@ public class SplitPackets {
             buffer = ByteBuffer.wrap(data);
         }
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        while (buffer.hasRemaining()) {
+        System.out.println("Buffer size : " + data.length);
+        while (buffer.hasRemaining() && buffer.remaining() > 2) {
             buffer.mark();
             final int len = buffer.getShort();
             System.out.println("Packet length " + len);
-            buffer.position(buffer.position() - 2);
+            buffer.reset();
             if (len <= 2 || len > MAX_PACKET_SIZE) {
                 System.out.println("Invalid packet length " + len);
             }

@@ -543,4 +543,37 @@ class TopologyTest {
         expectedclients.add(dest1);
         assertEquals(clients, expectedclients);
     }
+
+    @org.junit.jupiter.api.Test
+    void testAddClient() {
+        final Topology topology = Topology.getTopology();
+        
+        // Reset the topology
+        final java.util.List<java.util.List<ClientNode>> clusters = new java.util.ArrayList<>();
+        final java.util.List<ClientNode> servers = new java.util.ArrayList<>();
+        final NetworkStructure emptyNetwork = new NetworkStructure(clusters, servers);
+        topology.replaceNetwork(emptyNetwork);
+
+        final ClientNode server = new ClientNode("127.0.0.1", 9000); // Using a different port to avoid conflict
+        topology.addUser(server, server);
+
+        // Add rest 5 clients, they should all be in the same cluster
+        for (int i = 0; i < 5; i++) {
+            topology.addClient(new ClientNode("127.0.0.1", 9001 + i));
+        }
+
+        NetworkStructure network = topology.getNetwork();
+        assertEquals(1, network.clusters().size());
+        assertEquals(6, network.clusters().get(0).size()); // 1 server + 5 clients
+
+        // Add one more client, a new cluster should be created
+        topology.addClient(new ClientNode("127.0.0.1", 9006));
+
+        network = topology.getNetwork();
+        assertEquals(2, network.clusters().size());
+        assertEquals(6, network.clusters().get(0).size());
+        assertEquals(1, network.clusters().get(1).size());
+
+        topology.closeTopology();
+    }
 }

@@ -20,7 +20,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printInfo(final String module, final String str) {
-        LOGGER.log(Level.INFO, "[SIMPLENETWORKING]" + module + str);
+        LOGGER.log(Level.INFO, "[SIMPLENETWORKING]" + module + " " + str);
     }
 
     /**
@@ -30,7 +30,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printWarning(final String module, final String str) {
-        LOGGER.log(Level.WARNING, "[SIMPLENETWORKING]" + module + str);
+        LOGGER.log(Level.WARNING, "[SIMPLENETWORKING]" + module + " " + str);
     }
 
     /**
@@ -40,7 +40,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printError(final String module, final String str) {
-        LOGGER.log(Level.SEVERE, "[SIMPLENETWORKING]" + module + str);
+        LOGGER.log(Level.SEVERE, "[SIMPLENETWORKING]" + module + " " + str);
     }
 
 }

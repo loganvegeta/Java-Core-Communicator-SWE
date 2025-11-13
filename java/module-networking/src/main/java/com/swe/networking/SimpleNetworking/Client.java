@@ -22,7 +22,7 @@ public class Client implements IUser {
     /**
      * Variable to store the name of the module.
      */
-    private static final String MODULENAME = "CLIENT";
+    private static final String MODULENAME = "[CLIENT]";
     /**
      * The variable to store the device IP address.
      */

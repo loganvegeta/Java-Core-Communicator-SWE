@@ -20,7 +20,7 @@ public final class TCPCommunicator implements ProtocolBase {
     /**
      * Variable to store the name of the module.
      */
-    private static final String MODULENAME = "TCPCOMMUNICATOR";
+    private static final String MODULENAME = "[TCPCOMMUNICATOR]";
     /**
      * The server socket used to receive client connections.
      *
