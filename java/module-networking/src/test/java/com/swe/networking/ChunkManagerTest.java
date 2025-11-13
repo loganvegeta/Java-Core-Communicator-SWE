@@ -19,6 +19,7 @@ public class ChunkManagerTest {
     @Test
     void messageChunkingTest() throws UnknownHostException {
         final int payloadSize = 4;
+        ChunkManager.clearChunkManager();
         final ChunkManager chunkManager = ChunkManager.getChunkManager(payloadSize);
         final PacketParser parser = PacketParser.getPacketParser();
 
@@ -98,6 +99,7 @@ public class ChunkManagerTest {
      */
     @Test
     void chunkNumChunkingTest() throws UnknownHostException {
+        ChunkManager.clearChunkManager();
         final int payloadSize = 3;
         final ChunkManager chunkManager = ChunkManager.getChunkManager(payloadSize);
         final PacketParser parser = PacketParser.getPacketParser();
@@ -131,6 +133,7 @@ public class ChunkManagerTest {
      */
     @Test
     void constFieldChunkingTest() throws UnknownHostException {
+        ChunkManager.clearChunkManager();
         final int payloadSize = 6;
         final ChunkManager chunkManager = ChunkManager.getChunkManager(payloadSize);
         final PacketParser parser = PacketParser.getPacketParser();
@@ -179,6 +182,7 @@ public class ChunkManagerTest {
      */
     @Test
     void mergeChunksTest() throws UnknownHostException {
+        ChunkManager.clearChunkManager();
         final int payloadSize = 3;
         final ChunkManager chunkManager = ChunkManager.getChunkManager(payloadSize);
         final PacketParser parser = PacketParser.getPacketParser();

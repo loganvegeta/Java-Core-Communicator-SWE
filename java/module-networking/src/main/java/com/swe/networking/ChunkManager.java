@@ -28,6 +28,8 @@ public class ChunkManager {
      */
     private final int headerSize = PacketParser.getHeaderSize();
 
+    private static final String MODULENAME = "[CHUNKMANAGER]";
+
     private ChunkManager(final int payloadSize) {
         defaultPayloadSize = payloadSize;
     }
@@ -44,6 +46,10 @@ public class ChunkManager {
             return chunkManager;
         }
         return chunkManager;
+    }
+
+    public static void clearChunkManager(){
+        chunkManager = null;
     }
 
     /**
@@ -82,7 +88,7 @@ public class ChunkManager {
         final String msgId = String.valueOf(info.getMessageId()) + ":" + info.getIpAddress().toString();
         final int maxNumChunks = info.getChunkLength();
         final int chunkId = info.getChunkNum();
-        System.out.println("Chunk id / total chunks " + chunkId + " / " + maxNumChunks);
+        NetworkLogger.printInfo(MODULENAME, "Chunk id / total chunks " + chunkId + " / " + maxNumChunks);
         if (chunkListMap.containsKey(msgId)) {
             chunkListMap.get(msgId).add(chunk);
         } else {
@@ -147,14 +153,14 @@ public class ChunkManager {
 
         final byte[] data = info.getPayload();
         final int numChunks = (data.length + payloadSize - 1) / payloadSize;
-        System.out.println("chunk length " + numChunks);
+        NetworkLogger.printInfo(MODULENAME, "chunk length " + numChunks);
         info.setChunkLength(numChunks);
         info.setMessageId(messageId);
         messageId++;
         // reset message id to zero once it exceed limit
         for (int i = 0; i < data.length; i += payloadSize) {
             final int pSize = Math.min(payloadSize, data.length - i);
-            System.out.println("payload size " + pSize);
+            NetworkLogger.printInfo(MODULENAME, "payload size " + pSize);
             final byte[] payloadChunk = new byte[pSize];
             System.arraycopy(data, i, payloadChunk, 0, pSize);
             final int chunkNumber = i / payloadSize;
@@ -164,7 +170,7 @@ public class ChunkManager {
             final byte[] pkt = parser.createPkt(info);
             chunks.add(pkt);
         }
-        System.out.println("Chunk size : " + chunks.size());
+        NetworkLogger.printInfo(MODULENAME, "Chunk size : " + chunks.size());
         return chunks;
     }
 
