@@ -46,6 +46,10 @@ public class ChunkManager {
         return chunkManager;
     }
 
+    public static void clearChunkManager(){
+        chunkManager = null;
+    }
+
     /**
      * Message id.
      */
