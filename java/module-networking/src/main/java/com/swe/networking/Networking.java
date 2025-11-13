@@ -25,21 +25,28 @@ public class Networking implements AbstractNetworking, AbstractController {
     private final ChunkManager chunkManager;
 
     /** The variable to store singleton priority queue. */
-    private PriorityQueue priorityQueue;
+    private final PriorityQueue priorityQueue;
 
     /** The variable to store singleton topology. */
     private final Topology topology;
 
+    /** The variable to store singleton packet parser. */
+    final private PacketParser parser;
+
     /** The variable to store maximum packet size to chunk. */
     private final int payloadSize = 10 * 1024; // 10 KB
+
+    /** The variable thread to run start() method continuously. */
+    Thread startThread = null;
 
     /**
      * Private constructor for Netwroking class.
      */
     private Networking() {
         chunkManager = ChunkManager.getChunkManager(payloadSize);
-        priorityQueue = priorityQueue.getPriorityQueue();
+        priorityQueue = PriorityQueue.getPriorityQueue();
         topology = Topology.getTopology();
+        parser = PacketParser.getPacketParser();
     }
 
     /**
@@ -71,7 +78,9 @@ public class Networking implements AbstractNetworking, AbstractController {
         for (byte[] chunk : chunks) {
             try {
                 priorityQueue.addPacket(chunk);
+                System.out.println("Sending chunk: " + chunk);
             } catch (UnknownHostException ex) {
+                System.err.println("Unknown host exception: " + ex.getMessage());
             }
         }
     }
@@ -80,14 +89,23 @@ public class Networking implements AbstractNetworking, AbstractController {
      * Function to continuously send data.
      */
     public void start() {
-        while (true) {
-            if (true) {
-                // change the condition to priorityQueue isEmpty
+        while (!Thread.currentThread().isInterrupted()) {
+
+            final byte[] packet = priorityQueue.nextPacket();
+            if (packet == null) {
                 continue;
-            } else {
-                final byte[] packet = priorityQueue.nextPacket();
+            }
+            try{
+                final PacketInfo info = parser.parsePacket(packet);
+                ClientNode dest = new ClientNode(info.getIpAddress().getHostName(), info.getPortNum());
+                System.out.println(dest + " " +info.getIpAddress() + ": " + info.getPortNum());
+                topology.sendPacket(packet, dest);
+
+            }catch (Exception ex){
+                System.out.println("Error while processing and sending packet: " + ex.getMessage());
             }
         }
+        System.out.println("Networking is shutting down...");
     }
 
     /**
@@ -105,16 +123,21 @@ public class Networking implements AbstractNetworking, AbstractController {
         final PacketInfo pkt = new PacketInfo();
         pkt.setModule(module);
         pkt.setPriority(priority);
-        pkt.setBroadcast(0);
+        pkt.setBroadcast(broadcast);
+        pkt.setPayload(data);
+//        pkt.setLength(payloadSize);
+
         Vector<byte[]> chunks = new Vector<>();
         for (ClientNode client : dest) {
             try {
                 final int type = topology.getNetworkType(user, client);
+                System.out.println(type + " " + client);
                 pkt.setType(type);
                 pkt.setIpAddress(InetAddress.getByName(client.hostName()));
                 pkt.setPortNum(client.port());
                 pkt.setConnectionType(NetworkConnectionType.MODULE.ordinal());
-                chunks = chunkManager.chunk(pkt);
+                chunks.addAll(chunkManager.chunk(pkt));
+                System.out.println(chunks.size());
             } catch (UnknownHostException ex) {
             }
         }
@@ -136,7 +159,9 @@ public class Networking implements AbstractNetworking, AbstractController {
         for (byte[] chunk : chunks) {
             try {
                 priorityQueue.addPacket(chunk);
+                System.out.println("Sending chunk in broadcast: " + chunk);
             } catch (UnknownHostException ex) {
+                System.err.println("Unknown host exception: " + ex.getMessage());
             }
         }
     }
@@ -176,17 +201,26 @@ public class Networking implements AbstractNetworking, AbstractController {
     public void addUser(final ClientNode deviceAddress, final ClientNode mainServerAddress) {
         user = deviceAddress;
         topology.addUser(deviceAddress, mainServerAddress);
+
+        if(startThread == null){
+            startThread = new Thread(this::start);
+            startThread.start();
+        }
     }
 
     /**
-     * Function to call the subscirbed modules.
+     * Function to call the subscribed modules.
      *
      * @param module the module to call
      * @param data the data to sent
      */
     public void callSubscriber(final int module, final byte[] data) {
         final MessageListener function = listeners.get(module);
-        function.receiveData(data);
+        if(function == null){
+            System.out.println("No function found for module: " + module);
+        }else {
+            function.receiveData(data);
+        }
     }
 
 }
