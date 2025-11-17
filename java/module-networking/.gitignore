@@ -1,0 +1,6 @@
+#Add folders that not to be added to the repo
+
+/.vscode
+**/.idea
+/target/
+*.iml
