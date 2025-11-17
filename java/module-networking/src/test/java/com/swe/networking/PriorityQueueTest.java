@@ -365,7 +365,8 @@ class PriorityQueueTest {
         for (Future<Void> future : sendFutures) {
             future.get();
         }
-        System.out.println("\n--- Concurrent Addition Complete (Total: " + globalChunkCounter.get() * 3 + " packets) ---");
+        System.out.println("\n--- Concurrent Addition Complete (Total: "
+                + globalChunkCounter.get() * 3 + " packets) ---");
 
         // --- 2. Concurrent Packet Retrieval (Receiver Threads) ---
         Callable<Void> receiverTask = () -> {
@@ -521,9 +522,11 @@ class PriorityQueueTest {
 
         // Verify order (The first HP packets sent must be the injected ones)
         for (int i = 0; i < HP_INJECTION_COUNT; i++) {
-            assertTrue(sentHighPriorityChunks.contains(HP_CHUNK_START + i), "Missing injected HP packet: " + (HP_CHUNK_START + i));
+            assertTrue(sentHighPriorityChunks.contains(HP_CHUNK_START + i),
+                    "Missing injected HP packet: " + (HP_CHUNK_START + i));
         }
-        System.out.println("\nTest Successful: HP packets were sent immediately after injection, proving non-starvation.");
+        System.out.println(
+                "\nTest Successful: HP packets were sent immediately after injection, proving non-starvation.");
     }
 
     //-------------------------------------------------------------------------
@@ -575,7 +578,8 @@ class PriorityQueueTest {
         // Calculation and Assertion
 
         // Ensure the correct number of packets were sent
-        assertEquals(TOTAL_PACKETS_TO_SEND, sentCount, "The total number of sent packets must equal the number added.");
+        assertEquals(TOTAL_PACKETS_TO_SEND, sentCount,
+                "The total number of sent packets must equal the number added.");
 
         // Calculate time difference in seconds
         long elapsedTimeNanos = endTimeNanos - startTimeNanos;
