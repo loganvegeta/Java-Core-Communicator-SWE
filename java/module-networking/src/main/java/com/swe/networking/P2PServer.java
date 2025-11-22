@@ -47,7 +47,7 @@ public class P2PServer implements P2PUser {
     /**
      * The thread to send ALIVE.
      */
-    private final Thread sendThread = null;
+    private Thread sendThread = null;
 
     /**
      * The thread to monitor client timeouts.
@@ -97,10 +97,10 @@ public class P2PServer implements P2PUser {
         this.mainServer = mainServerAddress;
 
         this.timer = new Timer(timerTimeout, this::handleClientTimeout);
-//        sendThread = new Thread(this::sendAliveToMainServer);
+        sendThread = new Thread(this::sendAliveToMainServer);
         receiveThread = new Thread(this::receive);
 
-//        sendThread.start();
+        sendThread.start();
         receiveThread.start();
 
         System.out.println("P2PServer");

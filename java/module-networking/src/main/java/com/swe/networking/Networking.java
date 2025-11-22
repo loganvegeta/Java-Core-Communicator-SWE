@@ -55,10 +55,9 @@ public class Networking implements AbstractNetworking, AbstractController {
      * Variable to store the rpc for the app.
      */
     private AbstractRPC moduleRPC = null;
-    /**
-     * Variable to store the thread to start the send packets.
-     */
-    private final Thread sendThread;
+
+    /** The variable thread to run start() method continuously. */
+    Thread sendThread = null;
 
     /**
      * Private constructor for Netwroking class.
@@ -111,9 +110,10 @@ public class Networking implements AbstractNetworking, AbstractController {
                 // long endTime = System.currentTimeMillis();
                 // System.out.println("Time to create new dest: " + (endTime - startTime) + " ms");
                 System.out.println("Destination " + newdest);
-                topology.sendPacket(chunk, newdest);
-//                priorityQueue.addPacket(chunk);
+                // topology.sendPacket(chunk, newdest);
+                priorityQueue.addPacket(chunk);
             } catch (UnknownHostException ex) {
+                System.err.println("Unknown host exception: " + ex.getMessage());
             }
         }
     }
@@ -141,10 +141,10 @@ public class Networking implements AbstractNetworking, AbstractController {
     /**
      * Function to chunk the given data by the chunk manager.
      *
-     * @param data the data to be sent
-     * @param dest the dest to send the packet
-     * @param module the module to be sent to
-     * @param priority the priority of the packet
+     * @param data      the data to be sent
+     * @param dest      the dest to send the packet
+     * @param module    the module to be sent to
+     * @param priority  the priority of the packet
      * @param broadcast the data should b broadcasted or not
      * @return the chunks of the data
      */
@@ -158,13 +158,14 @@ public class Networking implements AbstractNetworking, AbstractController {
         Vector<byte[]> chunks = new Vector<>();
         for (ClientNode client : dest) {
             try {
-//                final int type = topology.getNetworkType(user, client);
-                final int type = 3;
+                final int type = topology.getNetworkType(user, client);
+                System.out.println(type + " " + client);
                 pkt.setType(type);
                 pkt.setIpAddress(InetAddress.getByName(client.hostName()));
                 pkt.setPortNum(client.port());
                 pkt.setConnectionType(NetworkConnectionType.MODULE.ordinal());
-                chunks = chunkManager.chunk(pkt);
+                chunks.addAll(chunkManager.chunk(pkt));
+                System.out.println(chunks.size());
             } catch (UnknownHostException ex) {
             }
         }
@@ -182,7 +183,15 @@ public class Networking implements AbstractNetworking, AbstractController {
     @Override
     public void broadcast(final byte[] data, final int module, final int priority) {
         final ClientNode[] dest = {topology.getServer(user)};
-        sendData(data, dest, module, priority);
+        final Vector<byte[]> chunks = getChunks(data, dest, module, priority, 1);
+        for (byte[] chunk : chunks) {
+            try {
+                priorityQueue.addPacket(chunk);
+                System.out.println("Sending chunk in broadcast: " + chunk);
+            } catch (UnknownHostException ex) {
+                System.err.println("Unknown host exception: " + ex.getMessage());
+            }
+        }
     }
 
     /**
@@ -223,14 +232,16 @@ public class Networking implements AbstractNetworking, AbstractController {
     }
 
     /**
-     * Function to call the subscirbed modules.
+     * Function to call the subscribed modules.
      *
      * @param module the module to call
      * @param data the data to sent
      */
     public void callSubscriber(final int module, final byte[] data) {
         final MessageListener function = listeners.get(module);
-        if (function != null) {
+        if(function == null){
+            System.out.println("No function found for module: " + module);
+        }else {
             function.receiveData(data);
         }
     }
@@ -259,5 +270,15 @@ public class Networking implements AbstractNetworking, AbstractController {
         moduleRPC.subscribe("networkRPCSendData", networkRPC::networkRPCSendData);
         moduleRPC.subscribe("networkRPCSubscribe", networkRPC::networkRPCSubscribe);
         moduleRPC.subscribe("networkRPCCloseNetworking", networkRPC::networkRPCCloseNetworking);
+    }
+
+    /**
+     * Function to check if a client is present in the topology (any cluster).
+     *
+     * @param client the input client to check
+     * @return true if client present, false otherwise
+     */
+    boolean isClientPresent(final ClientNode client) {
+        return topology.checkClientPresent(client);
     }
 }

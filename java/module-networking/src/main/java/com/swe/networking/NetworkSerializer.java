@@ -63,15 +63,12 @@ public class NetworkSerializer {
     public ClientNetworkRecord deserializeClientNetworkRecord(final byte[] data) {
         final ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        if (buffer.remaining() < Integer.BYTES + Integer.BYTES + Integer.BYTES) {
+        final int min_required = Integer.BYTES + Integer.BYTES + Integer.BYTES;
+        if (buffer.remaining() < min_required) {
             throw new IllegalArgumentException("Data too short ");
         }
 
         final int hostLength = buffer.getInt();
-
-        if (hostLength < 0) {
-            throw new IllegalArgumentException("Negative host length: " + hostLength);
-        }
 
         final int needed = hostLength + Integer.BYTES + Integer.BYTES;
         if (buffer.remaining() < needed) {
@@ -121,7 +118,7 @@ public class NetworkSerializer {
     }
 
     /**
-     * Function to deserialize ClientNode.
+     * Function to serialize NetworkStructure data.
      *
      * @param structure the data to serialize
      * @return the serialized object
@@ -147,7 +144,7 @@ public class NetworkSerializer {
     }
 
     /**
-     * Function to deserialize NetworkStrucuture.
+     * Function to deserialize NetworkStructure.
      *
      * @param data the data to deserialized
      * @return the Network Structure object
