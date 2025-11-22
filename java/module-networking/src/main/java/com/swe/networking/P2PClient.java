@@ -3,9 +3,7 @@ package com.swe.networking;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The Client belonging to a certain cluster.
@@ -49,7 +47,7 @@ public class P2PClient implements P2PUser {
     /**
      * alive thread manager.
      */
-    private final ScheduledExecutorService aliveScheduler;
+    private final ScheduledExecutorService aliveScheduler = null;
 
     /**
      * time interval gap to send alive packet.
@@ -72,12 +70,13 @@ public class P2PClient implements P2PUser {
      *
      * @param device The ClientNode info for this device.
      * @param server The ClientNode info for the mainServer.
+     * @param tcpCommunicator the communicator for the communication.
      */
-    public P2PClient(final ClientNode device, final ClientNode server) {
+    public P2PClient(final ClientNode device, final ClientNode server, final ProtocolBase tcpCommunicator) {
         this.deviceAddress = device;
         this.mainServerAddress = server;
 
-        this.communicator = new TCPCommunicator(device.port());
+        this.communicator = tcpCommunicator;
         chunkManager = ChunkManager.getChunkManager(packetHeaderSize);
 
         updateClusterServer();
@@ -87,9 +86,9 @@ public class P2PClient implements P2PUser {
         this.receiveThread.start();
 
         // start a scheduled ALIVE packets to the cluster server
-        this.aliveScheduler = Executors.newSingleThreadScheduledExecutor();
-        this.aliveScheduler.scheduleAtFixedRate(this::sendAlivePacket,
-                ALIVE_INTERVAL_SECONDS, ALIVE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+//        this.aliveScheduler = Executors.newSingleThreadScheduledExecutor();
+//        this.aliveScheduler.scheduleAtFixedRate(this::sendAlivePacket,
+//                ALIVE_INTERVAL_SECONDS, ALIVE_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     @Override
@@ -250,8 +249,14 @@ public class P2PClient implements P2PUser {
                 break;
 
             case MODULE:
-                System.out.println("p2pclient received MODULE packet");
-                chunkManager.addChunk(packet);
+                System.out.println("MODULE packet received");
+                final int module = parser.parsePacket(packet).getModule();
+                final byte[] data = chunkManager.addChunk(packet);
+                final Networking networking = Networking.getNetwork();
+                if (data != null) {
+                    final PacketInfo destpktInfo = parser.parsePacket(data);
+                    networking.callSubscriber(module, destpktInfo.getPayload());
+                }
                 break;
 
             case CLOSE: // 111 : close the client terminate

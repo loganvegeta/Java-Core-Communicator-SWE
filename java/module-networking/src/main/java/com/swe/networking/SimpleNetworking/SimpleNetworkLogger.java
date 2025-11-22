@@ -20,6 +20,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printInfo(final String module, final String str) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%n");
         LOGGER.log(Level.INFO, "[SIMPLENETWORKING]" + module + " " + str);
     }
 
@@ -30,6 +31,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printWarning(final String module, final String str) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%n");
         LOGGER.log(Level.WARNING, "[SIMPLENETWORKING]" + module + " " + str);
     }
 
@@ -40,6 +42,7 @@ public class SimpleNetworkLogger {
      * @param module the name of the module
      */
     public static void printError(final String module, final String str) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%n");
         LOGGER.log(Level.SEVERE, "[SIMPLENETWORKING]" + module + " " + str);
     }
 

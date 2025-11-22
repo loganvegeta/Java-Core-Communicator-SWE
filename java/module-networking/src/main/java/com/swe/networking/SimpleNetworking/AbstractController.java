@@ -1,5 +1,6 @@
 package com.swe.networking.SimpleNetworking;
 
+import com.swe.core.RPCinteface.AbstractRPC;
 import com.swe.networking.ClientNode;
 
 /**
@@ -18,4 +19,14 @@ public interface AbstractController {
      * Method to close the networking module.
      */
     void closeNetworking();
+
+    /**
+     * Method to consume the RPC. This function must attach 
+     * all the handlers for the RPC methods to the networking module.
+     * NO METHOD MAY BE ATTACHED TO THE RPC AFTER THIS FUNCTION IS CALLED.
+     *
+     * @param rpc the RPC to consume.
+     */
+    void consumeRPC(AbstractRPC rpc);
 }
+

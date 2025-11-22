@@ -147,14 +147,14 @@ public class ChunkManager {
 
         final byte[] data = info.getPayload();
         final int numChunks = (data.length + payloadSize - 1) / payloadSize;
-        System.out.println("chunk length " + numChunks);
+//        System.out.println("chunk length " + numChunks);
         info.setChunkLength(numChunks);
         info.setMessageId(messageId);
         messageId++;
         // reset message id to zero once it exceed limit
         for (int i = 0; i < data.length; i += payloadSize) {
             final int pSize = Math.min(payloadSize, data.length - i);
-            System.out.println("payload size " + pSize);
+//            System.out.println("payload size " + pSize);
             final byte[] payloadChunk = new byte[pSize];
             System.arraycopy(data, i, payloadChunk, 0, pSize);
             final int chunkNumber = i / payloadSize;
@@ -164,7 +164,7 @@ public class ChunkManager {
             final byte[] pkt = parser.createPkt(info);
             chunks.add(pkt);
         }
-        System.out.println("Chunk size : " + chunks.size());
+//        System.out.println("Chunk size : " + chunks.size());
         return chunks;
     }
 

@@ -138,6 +138,8 @@ public class Server implements IUser {
             final int port = pktInfo.getPortNum();
             final String addr = address.getHostAddress();
 
+            System.out.println(addr + " " + deviceIp);
+            // if (addr.equals(deviceIp) && port == devicePort) {
             if (addr.equals(deviceIp) && port == devicePort) {
                 final String data = new String(pktInfo.getPayload(), StandardCharsets.UTF_8);
                 byte[] message = chunkManager.addChunk(packet);

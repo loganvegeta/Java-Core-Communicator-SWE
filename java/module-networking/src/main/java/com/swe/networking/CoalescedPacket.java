@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 class CoalescedPacket {
+
     /**
      * Variable to store the name of the module.
      */
@@ -39,7 +40,8 @@ class CoalescedPacket {
 
         queue.add(packet);
         totalSize += packet.length;
-        NetworkLogger.printInfo(MODULENAME, "Packet of size " + packet.length + " added to queue. New total size: " + totalSize);
+        NetworkLogger.printInfo(MODULENAME, "Packet of size "
+                + packet.length + " added to queue. New total size: " + totalSize);
     }
 
     public long getStartTime() {
@@ -54,7 +56,8 @@ class CoalescedPacket {
         final byte[] head = this.queue.poll();
         if (head != null) {
             this.totalSize -= head.length;
-            NetworkLogger.printInfo(MODULENAME, "Packet of size " + head.length + " retrieved from queue. New total size: " + totalSize);
+            NetworkLogger.printInfo(MODULENAME, "Packet of size "
+                    + head.length + " retrieved from queue. New total size: " + totalSize);
         } else {
             NetworkLogger.printInfo(MODULENAME, "Attempted to retrieve packet from empty queue.");
         }

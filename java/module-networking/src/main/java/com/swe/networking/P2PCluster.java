@@ -98,7 +98,7 @@ public class P2PCluster implements P2PUser {
             if (networkStructure.clusters().get(i).contains(client)) {
                 clusterServer = networkStructure.servers().get(i);
                 this.isServer = false;
-                user = new P2PClient(client, server);
+                user = new P2PClient(client, server, tcpCommunicator);
                 break;
             }
         }
@@ -134,6 +134,7 @@ public class P2PCluster implements P2PUser {
      */
     @Override
     public void send(final byte[] data, final ClientNode destIp) {
+//        System.out.println("P2pCluster send to " + destIp.hostName());
         this.user.send(data, destIp);
     }
 

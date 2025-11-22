@@ -11,9 +11,9 @@ public class ServerTest {
     private static final String Client1 = "127.0.0.1";
     private static final String Client2 = "127.0.0.1";
     private static final String ServerIp = "127.0.0.1";
-    private static final int Client1Port = 9001;
-    private static final int Client2Port = 9002;
-    private static final int ServerPort = 9000;
+    private static final int Client1Port = 10001;
+    private static final int Client2Port = 10002;
+    private static final int ServerPort = 10000;
     private static final SimpleNetworking simpleNetworking = SimpleNetworking.getSimpleNetwork();
     private static final PacketParser parser = PacketParser.getPacketParser();
 

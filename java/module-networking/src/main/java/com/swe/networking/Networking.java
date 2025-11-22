@@ -57,7 +57,7 @@ public class Networking implements AbstractNetworking, AbstractController {
     private AbstractRPC moduleRPC = null;
 
     /** The variable thread to run start() method continuously. */
-    Thread startThread = null;
+    Thread sendThread = null;
 
     /**
      * Private constructor for Netwroking class.
@@ -67,6 +67,8 @@ public class Networking implements AbstractNetworking, AbstractController {
         priorityQueue = priorityQueue.getPriorityQueue();
         parser = PacketParser.getPacketParser();
         topology = Topology.getTopology();
+        sendThread = new Thread(this::start);
+        sendThread.start();
     }
 
     /**
@@ -120,20 +122,18 @@ public class Networking implements AbstractNetworking, AbstractController {
      * Function to continuously send data.
      */
     public void start() {
-        while (!Thread.currentThread().isInterrupted()) {
-
-            final byte[] packet = priorityQueue.nextPacket();
-            if (packet == null) {
-                continue;
-            }
-            try{
-                final PacketInfo info = parser.parsePacket(packet);
-                ClientNode dest = new ClientNode(info.getIpAddress().getHostName(), info.getPortNum());
-                System.out.println(dest + " " +info.getIpAddress() + ": " + info.getPortNum());
-                topology.sendPacket(packet, dest);
-
-            }catch (Exception ex){
-                System.out.println("Error while processing and sending packet: " + ex.getMessage());
+        while (true) {
+            if (!priorityQueue.isEmpty()) {
+                final byte[] packet = priorityQueue.nextPacket();
+                try {
+                    final PacketInfo pktInfo = parser.parsePacket(packet);
+                    final InetAddress addr = pktInfo.getIpAddress();
+                    final int port = pktInfo.getPortNum();
+                    final ClientNode dest = new ClientNode(addr.getHostAddress(), port);
+                    topology.sendPacket(packet, dest);
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
             }
         }
         System.out.println("Networking is shutting down...");
@@ -156,8 +156,6 @@ public class Networking implements AbstractNetworking, AbstractController {
         pkt.setPriority(priority);
         pkt.setBroadcast(broadcast);
         pkt.setPayload(data);
-//        pkt.setLength(payloadSize);
-
         Vector<byte[]> chunks = new Vector<>();
         for (ClientNode client : dest) {
             try {
@@ -232,11 +230,6 @@ public class Networking implements AbstractNetworking, AbstractController {
     public void addUser(final ClientNode deviceAddress, final ClientNode mainServerAddress) {
         user = deviceAddress;
         topology.addUser(deviceAddress, mainServerAddress);
-
-        if(startThread == null){
-            startThread = new Thread(this::start);
-            startThread.start();
-        }
     }
 
     /**

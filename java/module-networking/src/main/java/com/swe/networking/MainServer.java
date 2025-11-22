@@ -42,7 +42,7 @@ public class MainServer implements P2PUser {
     /**
      * The timer object to monitor client timeouts.
      */
-    private final Timer timer;
+    private final Timer timer = null;
 
     /**
      * Variable to start the timer.
@@ -88,7 +88,7 @@ public class MainServer implements P2PUser {
         mainServerClusterIdx = 0;
         serializer = NetworkSerializer.getNetworkSerializer();
         chunkManager = ChunkManager.getChunkManager(packetHeaderSize);
-        timer = new Timer(timerTimeoutMilliSeconds, this::handleClientTimeout);
+//        timer = new Timer(timerTimeoutMilliSeconds, this::handleClientTimeout);
         NetworkLogger.printInfo("MainServer", "Listening at port:" + serverPort + " ...");
         communicator = new TCPCommunicator(serverPort);
         receiveThread = new Thread(() -> receive());
@@ -131,6 +131,7 @@ public class MainServer implements P2PUser {
         while (true) {
             final byte[] packet = communicator.receiveData();
             if (packet != null) {
+//                System.out.println("Packet " + packet.length);
                 final List<byte[]> packets = SplitPackets.getSplitPackets().split(packet);
                 for (byte[] p : packets) {
                     parsePacket(p);
@@ -199,7 +200,8 @@ public class MainServer implements P2PUser {
                 final byte[] data = chunkManager.addChunk(packet);
                 final Networking networking = Networking.getNetwork();
                 if (data != null) {
-                    networking.callSubscriber(module, data);
+                    final byte[] payload = parser.parsePacket(data).getPayload();
+                    networking.callSubscriber(module, payload);
                 }
             } else if (connectionType == NetworkConnectionType.CLOSE.ordinal()) {
                 NetworkLogger.printInfo("MainServer", "Closing the Main Server");
@@ -324,7 +326,9 @@ public class MainServer implements P2PUser {
     private void handleHello(final ClientNode dest) {
         NetworkLogger.printInfo("MainServer", "Responding " + dest + " with a Hello packet...");
         final int clusterIdx = topology.addClient(dest);
-        addClientToTimer(dest, clusterIdx);
+//        addClientToTimer(dest, clusterIdx);
+        // The controller is notified of any new client that is added.
+        Networking.getNetwork().callSubscriber(0, serializer.serializeClientNode(dest));
         sendNetworkPktResponse(dest);
         // send add packet to all cluster servers.
         final List<ClientNode> servers = topology.getAllClusterServers();
@@ -363,7 +367,7 @@ public class MainServer implements P2PUser {
     public void close() {
         receiveThread.interrupt();
         communicator.close();
-        timer.close();
+//        timer.close();
     }
 
     /**
