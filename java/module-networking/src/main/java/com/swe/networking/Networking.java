@@ -136,7 +136,6 @@ public class Networking implements AbstractNetworking, AbstractController {
                 }
             }
         }
-        System.out.println("Networking is shutting down...");
     }
 
     /**
@@ -271,5 +270,15 @@ public class Networking implements AbstractNetworking, AbstractController {
         moduleRPC.subscribe("networkRPCSendData", networkRPC::networkRPCSendData);
         moduleRPC.subscribe("networkRPCSubscribe", networkRPC::networkRPCSubscribe);
         moduleRPC.subscribe("networkRPCCloseNetworking", networkRPC::networkRPCCloseNetworking);
+    }
+
+    /**
+     * Function to check if a client is present in the topology (any cluster).
+     *
+     * @param client the input client to check
+     * @return true if client present, false otherwise
+     */
+    boolean isClientPresent(final ClientNode client) {
+        return topology.checkClientPresent(client);
     }
 }

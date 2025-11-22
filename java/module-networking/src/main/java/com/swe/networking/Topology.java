@@ -327,4 +327,19 @@ public final class Topology implements AbstractTopology {
     public void sendPacket(final byte[] packet, final ClientNode dest) {
         user.send(packet, dest);
     }
+
+    /**
+     * Function to check if a client is present in the topology (any cluster).
+     *
+     * @param client the input client to check
+     * @return true if client present, false otherwise
+     */
+    boolean checkClientPresent(final ClientNode client) {
+        for (List<ClientNode> cluster : clusters) {
+            if (cluster.contains(client)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
